@@ -1,0 +1,11 @@
+name: zz-diagnostic
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo
+        run: echo diagnostic-ok
