@@ -38,12 +38,14 @@ jobs:
           restore-keys: cloud189-token-
 
       - name: 🔧 Init secrets
-        uses: shine1594/secrets-to-env-action@master
-        with:
-          secrets: ${{ toJSON(secrets) }}
-          secrets_env: production
-          prefix_prod: ""
-          file_name_prod: .env
+        env:
+          TY_USERNAME_1: ${{ secrets.TY_USERNAME_1 }}
+          TY_PASSWORD_1: ${{ secrets.TY_PASSWORD_1 }}
+        run: |
+          {
+            printf 'TY_USERNAME_1=%s\n' "$TY_USERNAME_1"
+            printf 'TY_PASSWORD_1=%s\n' "$TY_PASSWORD_1"
+          } > .env
 
       - name: 📡 Init dependencies
         run: npm install
