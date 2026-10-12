@@ -1,0 +1,39 @@
+name: zz-ha
+on:
+  workflow_dispatch:
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔀 random delay 0-300 seconds
+        run: sleep $((RANDOM % 301))
+
+      - name: 🔌 Check out code
+        uses: actions/checkout@main
+
+      - name: 🔨 Setup Node.js environment
+        uses: actions/setup-node@main
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: 👾 Check if Debug is true
+        if: vars.debug == '1'
+        run: |
+          echo "CLOUD189_VERBOSE=1" >> $GITHUB_ENV
+      
+      - name: 📹 Restore cached Cookie
+        id: cache-cookie-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .token
+          key: cloud189-token-${{ hashFiles('.token/*.json') }}
+          restore-keys: cloud189-token-
+
+      - name: 🔧 Init secrets
+        uses: shine1594/secrets-to-env-action@master
+        with:
+          secrets: ${{ toJSON(secrets) }}
+          secrets_env: production
+          prefix_prod: ""
+          file_name_prod: .env
