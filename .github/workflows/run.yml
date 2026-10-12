@@ -41,10 +41,12 @@ jobs:
         env:
           TY_USERNAME_1: ${{ secrets.TY_USERNAME_1 }}
           TY_PASSWORD_1: ${{ secrets.TY_PASSWORD_1 }}
+          SENDKEY: ${{ secrets.SENDKEY }}
         run: |
           {
             printf 'TY_USERNAME_1=%s\n' "$TY_USERNAME_1"
             printf 'TY_PASSWORD_1=%s\n' "$TY_PASSWORD_1"
+            printf 'SENDKEY=%s\n' "$SENDKEY"
           } > .env
 
       - name: 📡 Init dependencies
