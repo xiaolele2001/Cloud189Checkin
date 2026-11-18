@@ -15,16 +15,22 @@ sdkLogger.configure({
   isDebugEnabled: process.env.CLOUD189_VERBOSE === "1",
 });
 
+// 每个账号的执行结果，用于拼推送标题
+const accountResults = [];
+
 // 个人任务签到
 const doUserTask = async (cloudClient, logger) => {
   const result = await cloudClient.userSign()
   const netdiskBonus = result.isSign? 0: result.netdiskBonus
   logger.info(`个人签到任务: 获得 ${netdiskBonus}M 空间`);
+  return netdiskBonus;
 };
 
 const run = async (userName, password, userSizeInfoMap, logger) => {
   if (userName && password) {
     const before = Date.now();
+    const outcome = { userName: mask(userName, 3, 7), ok: false, bonus: 0 };
+    accountResults.push(outcome);
     try {
       logger.log("开始执行");
       const cloudClient = new CloudClient({
@@ -38,8 +44,13 @@ const run = async (userName, password, userSizeInfoMap, logger) => {
         userSizeInfo: beforeUserSizeInfo,
         logger,
       });
-      await Promise.all([doUserTask(cloudClient, logger)]);
+      const [bonus] = await Promise.all([doUserTask(cloudClient, logger)]);
+      outcome.ok = true;
+      outcome.bonus = Number(bonus) || 0;
     } catch (e) {
+      outcome.error = e.response
+        ? `HTTP ${e.response.statusCode}`
+        : e.message || String(e);
       if (e.response) {
         logger.log(`请求失败: ${e.response.statusCode}, ${e.response.body}`);
       } else {
@@ -55,6 +66,23 @@ const run = async (userName, password, userSizeInfoMap, logger) => {
       );
     }
   }
+};
+
+// 微信预览只显示标题，所以把签到结果写进标题
+const buildPushTitle = () => {
+  const total = accountResults.length;
+  const failed = accountResults.filter((r) => !r.ok).length;
+  const bonus = accountResults.reduce((sum, r) => sum + r.bonus, 0);
+  if (total === 0) {
+    return "⚠️ 天翼签到 未执行";
+  }
+  if (failed === 0) {
+    return bonus > 0 ? `✅ 天翼签到 +${bonus}M` : "✅ 天翼签到 今日已签";
+  }
+  if (failed === total) {
+    return `❌ 天翼签到失败 ${failed}/${total}`;
+  }
+  return `⚠️ 天翼签到 ${total - failed}/${total} 成功`;
 };
 
 // 开始执行程序
@@ -112,7 +140,7 @@ async function main() {
     const logs = catLogs();
     const events = recording.replay();
     const content = events.map((e) => `${e.data.join("")}`).join("  \n");
-    push("天翼云盘自动签到任务", logs + content);
+    push(buildPushTitle(), logs + content);
     recording.erase();
     cleanLogs();
   }
