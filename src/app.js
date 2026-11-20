@@ -111,23 +111,23 @@ async function main() {
       continue;
     }
     logger.log(
-      `个人容量：⬆️  ${(
+      `个人容量：本次 +${(
         (afterUserSizeInfo.cloudCapacityInfo.totalSize -
           userSizeInfo.cloudCapacityInfo.totalSize) /
         1024 /
         1024
-      ).toFixed(2)}M/${(
+      ).toFixed(2)}M，当前 ${(
         afterUserSizeInfo.cloudCapacityInfo.totalSize /
         1024 /
         1024 /
         1024
       ).toFixed(2)}G`,
-      `家庭容量：⬆️  ${(
+      `家庭容量：本次 +${(
         (afterUserSizeInfo.familyCapacityInfo.totalSize -
           userSizeInfo.familyCapacityInfo.totalSize) /
         1024 /
         1024
-      ).toFixed(2)}M/${(
+      ).toFixed(2)}M，当前 ${(
         afterUserSizeInfo.familyCapacityInfo.totalSize /
         1024 /
         1024 /
