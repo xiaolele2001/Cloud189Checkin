@@ -103,7 +103,13 @@ async function main() {
     userName,
     { cloudClient, userSizeInfo, logger },
   ] of userSizeInfoMap) {
-    const afterUserSizeInfo = await cloudClient.getUserSizeInfo();
+    let afterUserSizeInfo;
+    try {
+      afterUserSizeInfo = await cloudClient.getUserSizeInfo();
+    } catch (e) {
+      logger.error(`容量汇总失败: ${e.message || e}`);
+      continue;
+    }
     logger.log(
       `个人容量：⬆️  ${(
         (afterUserSizeInfo.cloudCapacityInfo.totalSize -
@@ -136,6 +142,9 @@ async function main() {
     await main();
     //等待日志文件写入
     await delay(1000);
+  } catch (e) {
+    // 汇总/推送阶段的异常不应打断推送，先记下来，推送照常发
+    console.error(e);
   } finally {
     const logs = catLogs();
     const events = recording.replay();
@@ -143,5 +152,9 @@ async function main() {
     push(buildPushTitle(), logs + content);
     recording.erase();
     cleanLogs();
+  }
+  // 只有账号签到本身失败才返回非零，避免汇总异常触发 workflow 重跑造成重复签到与重复推送
+  if (accountResults.length === 0 || accountResults.some((r) => !r.ok)) {
+    process.exitCode = 1;
   }
 })();
